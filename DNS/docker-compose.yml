@@ -1,0 +1,60 @@
+services:
+
+  Pihole:
+    container_name: Pihole
+    image: pihole/pihole:latest
+    restart: unless-stopped
+    networks:
+      Internet:
+      DNS:
+        ipv4_address: ${PIHOLE_IP}
+    ports:
+      - "${HOST_IP}:53:53/tcp"
+      - "${HOST_IP}:53:53/udp"
+      - "${HOST_IP}:80:80/tcp"
+    volumes:
+      - Pihole:/etc/pihole
+    environment:
+      TZ: "${TIMEZONE}"
+    depends_on:
+      - Unbound
+
+  Unbound:
+    container_name: Unbound
+    image: mvance/unbound:latest
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      Internet:
+      DNS:
+        ipv4_address: ${UNBOUND_IP}
+    volumes:
+      - Unbound:/opt/unbound/etc/unbound/
+    healthcheck:
+      disable: true
+
+networks:
+  Internet:
+    name: Internet
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: ${INTERNET_SUBNET}
+          gateway: ${INTERNET_GATEWAY}
+    internal: false
+  DNS:
+    name: DNS
+    driver: bridge
+    internal: true
+    ipam:
+      driver: default
+      config:
+        - subnet: ${DNS_SUBNET}
+
+volumes:
+  Unbound:
+    name: Unbound
+  Pihole:
+    name: Pihole
