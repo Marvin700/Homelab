@@ -1,0 +1,99 @@
+http:
+  routers:
+    Proxmox:
+      entryPoints:
+        - "https"
+      middlewares:
+        - Chain-Intern
+      rule: "Host(`proxmox.marvin-netzwerk.de`)"
+      tls: {}
+      service: Proxmox
+    OMV:
+      entryPoints:
+        - "https"
+      middlewares:
+        - Chain-Intern
+      rule: "Host(`omv.marvin-netzwerk.de`)"
+      tls: {}
+      service: OMV
+    Checkmk:
+      entryPoints:
+        - "https"
+      middlewares:
+        - Chain-Intern
+      rule: "Host(`checkmk.marvin-netzwerk.de`)"
+      tls: {}
+      service: Checkmk
+    Pihole:
+      entryPoints:
+        - "https"
+      rule: "Host(`pihole.marvin-netzwerk.de`)"
+      tls: {}
+      service: Pihole
+    Vaultwarden:
+      entryPoints:
+        - "https"
+      middlewares:
+        - Chain-Intern
+      rule: "Host(`pw.marvin-netzwerk.de`)"
+      tls: {}
+      service: Vaultwarden
+
+  services:
+    Proxmox:
+      loadBalancer:
+        servers:
+          - url: "https://192.168.0.250:8006"
+    OMV:
+      loadBalancer:
+        servers:
+          - url: "https://192.168.0.6"
+    Pihole:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.0.2"
+    Checkmk:
+      loadBalancer:
+        servers:
+          - url: "https://192.168.0.5"
+    Vaultwarden:
+      loadBalancer:
+        servers:
+          - url: "https://192.168.0.10"
+
+
+  middlewares:
+    Authelia:
+      forwardAuth:
+        address: "http://authelia:9091/api/verify?rd=https://auth.[DOMAIN]"
+
+    IP-Intern:
+      ipWhiteList:
+        sourceRange:
+          - "192.168.0.0/24"
+
+    default-headers:
+      headers:
+        frameDeny: true
+        browserXssFilter: true
+        contentTypeNosniff: true
+        forceSTSHeader: true
+        stsIncludeSubdomains: true
+        stsPreload: true
+        stsSeconds: 15552000
+        customFrameOptionsValue: SAMEORIGIN
+        customRequestHeaders:
+          X-Forwarded-Proto: https
+
+    Chain-Intern:
+      chain:
+        middlewares:
+          - default-headers
+          - IP-Intern
+
+    Chain-Intern-Secure:
+      chain:
+        middlewares:
+          - default-headers
+          - IP-Intern
+          - Authelia

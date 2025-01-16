@@ -1,0 +1,98 @@
+# Traefik + Authelia
+
+services:
+
+  Traefik:
+    image: traefik:latest
+    container_name: Traefik
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      Internet:
+      Reverse-Proxy:
+    ports:
+      - "${HOST_IP}:443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /etc/localtime:/etc/localtime:ro
+      - ./config.yml:/config.yml:ro
+      - Traefik:/config
+    environment:
+      CF_API_EMAIL: "${CLOUDFLARE_EMAIL}"
+      CF_DNS_API_TOKEN: "${CLOUDFLAREAPI_TOKEN}"
+    command:
+      - "--api.debug=false"
+      - "--api.dashboard=true"
+      - "--entrypoints.https.address=:443"
+      - "--serversTransport.insecureSkipVerify=true"
+      - "--providers.file.filename=/config.yml"
+      - "--providers.docker.exposedByDefault=false"
+      - "--providers.docker.endpoint=unix:///var/run/docker.sock"
+      - "--certificatesResolvers.cloudflare.acme.email=${CLOUDFLARE_EMAIL}"
+      - "--certificatesResolvers.cloudflare.acme.storage=/config/acme.json"
+      - "--certificatesResolvers.cloudflare.acme.dnsChallenge.provider=cloudflare"
+      - "--certificatesResolvers.cloudflare.acme.dnsChallenge.resolvers=1.1.1.1:53,1.0.0.1:53"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.tls=true"
+      - "traefik.http.routers.traefik.entrypoints=https"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.${DOMAIN}`)"
+      - "traefik.http.routers.traefik.tls.certresolver=cloudflare"
+      - "traefik.http.routers.traefik.tls.domains[0].main=${DOMAIN}"
+      - "traefik.http.routers.traefik.tls.domains[0].sans=*.${DOMAIN}"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.middlewares=Chain-Intern@file"
+      - "traefik.docker.network=Reverse-Proxy"
+    depends_on:
+      - Authelia
+
+  Authelia:
+    image: authelia/authelia
+    container_name: Authelia
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      Reverse-Proxy:
+    volumes:
+      - Authelia:/config
+    environment:
+      - TZ=${TIMEZONE}
+    labels:
+      - 'traefik.enable=true'
+      - "traefik.docker.network=Reverse-Proxy"
+      - 'traefik.http.routers.authelia.tls=true'
+      - 'traefik.http.routers.authelia.entrypoints=https'
+      - 'traefik.http.routers.authelia.rule=Host(`auth.${DOMAIN}`)'
+      - "traefik.http.routers.authelia.middlewares=Chain-Intern@file"
+      - 'traefik.http.middlewares.authelia.forwardauth.address=http://authelia:9091/api/verify?rd=https://auth.${DOMAIN}'
+      - "traefik.http.routers.authelia.service=authelia"
+      - "traefik.http.services.authelia.loadbalancer.server.port=9091"
+
+networks:
+  Internet:
+    name: Internet
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: ${INTERNET_SUBNET}
+          gateway: ${INTERNET_GATEWAY}
+    internal: false
+  Reverse-Proxy:
+    name: Reverse-Proxy
+    driver: bridge
+    internal: true
+    ipam:
+      driver: default
+      config:
+        - subnet: ${PROXY_SUBNET}
+
+volumes:
+  Traefik:
+    name: Traefik
+  Authelia:
+    name: Authelia
+
+
