@@ -1,0 +1,137 @@
+# Teamspeak + Ranksystem + Sinusbot
+
+services:
+
+  Teamspeak:
+    container_name: Teamspeak
+    image: teamspeak:latest
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      Internet:
+      Teamspeak:
+        aliases:
+          - Teamspeak.${DOMAIN}
+    ports:
+      - "9987:9987/udp"
+      - "10011:10011"
+      - "30033:30033"
+    volumes:
+      - Teamspeak:/var/ts3server/
+    environment:
+      TS3SERVER_LICENSE: accept
+
+
+  Sinusbot:
+    image: sinusbot/docker:latest
+    container_name: Sinusbot
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      Internet:
+      Reverse-Proxy:
+      Teamspeak:
+        aliases:
+          - Sinusbot.${DOMAIN}
+    volumes:
+      - Sinusbot-Scripts:/opt/sinusbot/scripts
+      - Sinusbot-Data:/opt/sinusbot/data
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=Reverse-Proxy"
+      - "traefik.http.routers.sinusbot.tls=true"
+      - "traefik.http.routers.sinusbot.entrypoints=https"
+      - "traefik.http.routers.sinusbot.middlewares=Chain-Secure@file"
+      - "traefik.http.routers.sinusbot.rule=Host(`bot.${DOMAIN}`)"
+      - "traefik.http.services.sinusbot.loadbalancer.server.port=8087"
+      - "traefik.http.routers.sinusbot.service=sinusbot"
+    depends_on:
+      - Teamspeak
+    environment:
+      - TS3SERVER_LICENSE= accept
+      - UID= 1001
+      - GID= 1001
+
+
+  Ranksystem:
+    image: jvmerkle/ts3-ranksystem
+    container_name: Ranksystem
+    restart: unless-stopped
+    stop_signal: SIGTERM
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      Reverse-Proxy:
+      Teamspeak:
+        aliases:
+          - Ranksystem.${DOMAIN}
+    volumes:
+      - Ranksystem:/var/www/tsicons
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=Reverse-Proxy"
+      - "traefik.http.routers.ranksystem.tls=true"
+      - "traefik.http.routers.ranksystem.entrypoints=https"
+      - "traefik.http.routers.ranksystem.middlewares=Chain-Secure@file"
+      - "traefik.http.routers.ranksystem.rule=Host(`rank.${DOMAIN}`)"
+      - "traefik.http.services.ranksystem.loadbalancer.server.port=80"
+      - "traefik.http.routers.ranksystem.service=ranksystem"
+    environment:
+#      - INSTALL_MODE=1
+      - BASE_HREF=/
+      - DB_TYPE=mysql
+      - DB_HOST=Ranksystem-DB.${DOMAIN}
+      - DB_NAME=${RANKSYSTEM_DB_DB}
+      - DB_USERNAME=${RANKSYSTEM_DB_USER}
+      - DB_PASSWORD=${RANKSYSTEM_DB_PASSWORD}
+    depends_on:
+      - Teamspeak
+      - Ranksystem-DB
+
+  Ranksystem-DB:
+    image: mariadb
+    container_name: Ranksystem-DB
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - Ranksystem-DB:/var/lib/mysql
+    environment:
+      - MYSQL_RANDOM_ROOT_PASSWORD=1
+      - MYSQL_DATABASE=${RANKSYSTEM_DB_DB}
+      - MYSQL_USER=${RANKSYSTEM_DB_USER}
+      - MYSQL_PASSWORD=${RANKSYSTEM_DB_PASSWORD}
+    networks:
+      Teamspeak:
+       aliases:
+          - Ranksystem-DB.${DOMAIN}
+networks:
+  Internet:
+    external: true
+  Reverse-Proxy:
+    external: true
+  Teamspeak:
+    name: Teamspeak
+    driver: bridge
+    internal: true
+    ipam:
+      driver: default
+      config:
+        - subnet: ${TEAMSPEAK_SUBNET}
+
+volumes:
+  Teamspeak:
+    name: Teamspeak
+  Sinusbot-Data:
+    name: Sinusbot-Data
+  Sinusbot-Scripts:
+    name: Sinusbot-Scripts
+  Ranksystem:
+    name: Ranksystem
+  Ranksystem-DB:
+    name: Ranksystem-DB
+
+
+
