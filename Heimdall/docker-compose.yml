@@ -1,0 +1,34 @@
+# Heimdall
+
+services:
+
+  Dashboard:
+    image: lscr.io/linuxserver/heimdall:latest
+    container_name: Dashboard
+    restart: unless-stopped
+    networks:
+      - Internet
+      - Reverse-Proxy
+    volumes:
+      - Heimdall:/config
+    environment:
+      - TZ=Europe/Berlin
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=Reverse-Proxy"
+      - "traefik.http.routers.heimdall.tls=true"
+      - "traefik.http.routers.heimdall.entrypoints=https"
+      - "traefik.http.routers.heimdall.rule=Host(`home.${DOMAIN}`)"
+      - "traefik.http.routers.heimdall.service=heimdall"
+      - "traefik.http.routers.heimdall.middlewares=Chain-Secure@file"
+      - "traefik.http.services.heimdall.loadbalancer.server.port=443"
+      - "traefik.http.services.heimdall.loadbalancer.server.scheme=https"
+
+  Internet:
+    external: true
+  Reverse-Proxy:
+    external: true
+
+volumes:
+  Heimdall:
+    name: Heimdall
