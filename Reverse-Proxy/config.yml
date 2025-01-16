@@ -5,7 +5,7 @@ http:
         - "https"
       middlewares:
         - Chain-Intern
-      rule: "Host(`proxmox.marvin-netzwerk.de`)"
+      rule: "Host(`proxmox.DOMAIN.de`)"
       tls: {}
       service: Proxmox
     OMV:
@@ -13,7 +13,7 @@ http:
         - "https"
       middlewares:
         - Chain-Intern
-      rule: "Host(`omv.marvin-netzwerk.de`)"
+      rule: "Host(`omv.DOMAIN.de`)"
       tls: {}
       service: OMV
     Checkmk:
@@ -21,13 +21,13 @@ http:
         - "https"
       middlewares:
         - Chain-Intern
-      rule: "Host(`checkmk.marvin-netzwerk.de`)"
+      rule: "Host(`checkmk.DOMAIN.de`)"
       tls: {}
       service: Checkmk
     Pihole:
       entryPoints:
         - "https"
-      rule: "Host(`pihole.marvin-netzwerk.de`)"
+      rule: "Host(`pihole.DOMAIN.de`)"
       tls: {}
       service: Pihole
     Vaultwarden:
@@ -35,7 +35,7 @@ http:
         - "https"
       middlewares:
         - Chain-Intern
-      rule: "Host(`pw.marvin-netzwerk.de`)"
+      rule: "Host(`pw.DOMAIN.de`)"
       tls: {}
       service: Vaultwarden
 
