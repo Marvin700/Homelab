@@ -18,6 +18,7 @@ services:
       - Pihole:/etc/pihole
     environment:
       TZ: "${TIMEZONE}"
+      #WEBPASSWORD: 'PASSWORD'
     depends_on:
       - Unbound
 
