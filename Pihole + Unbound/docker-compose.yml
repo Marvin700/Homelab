@@ -11,9 +11,9 @@ services:
       DNS:
         ipv4_address: ${PIHOLE_IP}
     ports:
-      - "${HOST_IP}:53:53/tcp"
-      - "${HOST_IP}:53:53/udp"
-      - "${HOST_IP}:80:80/tcp"
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "80:80/tcp"
     volumes:
       - Pihole:/etc/pihole
     environment:
