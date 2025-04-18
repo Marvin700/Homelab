@@ -1,0 +1,17 @@
+---
+- hosts: VM,LXC
+  become: true
+  tasks:
+
+  - name: Update package lists
+    apt:
+      update_cache: yes
+
+  - name: Perform dist-upgrade
+    apt:
+      upgrade: dist
+
+  - name: Autoremove unused packages
+    apt:
+      autoremove: yes
+      autoclean: yes

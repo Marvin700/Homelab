@@ -1,0 +1,7 @@
+---
+- hosts: CMK
+  become: true
+  tasks:
+
+  - name: Update Checkmk agent
+    command: cmk-update-agent -v
