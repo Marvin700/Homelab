@@ -1,0 +1,30 @@
+# CLoudflare DDNS
+
+services:
+
+  DDNS:
+    container_name: -DDNS
+    image: oznu/cloudflare-ddns:latest
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      Internet:
+    environment:
+      - API_KEY=${CLOUDFLARE_API_KEY}
+      - ZONE=${DOMAIN}
+      - PROXIED=true
+      - SUBDOMAIN=teamspeak
+      - DELETE_ON_STOP=true
+
+
+networks:
+  Internet:
+    name: Internet
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: ${INTERNET_SUBNET}
+          gateway: ${INTERNET_GATEWAY}
+    internal: false
