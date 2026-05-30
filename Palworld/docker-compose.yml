@@ -1,0 +1,52 @@
+services:
+
+  Palworld-Server:
+    image: thijsvanloef/palworld-server-docker:latest
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    container_name: Palworld-Server
+    stop_grace_period: 60s
+    networks:
+      Internet:
+    ports:
+      - 8211:8211/udp
+#      - 27015:27015/udp
+#      - 8212:8212/tcp
+    environment:
+       PUID: 1002
+       PGID: 1002
+       PORT: 8211
+       PLAYERS: 4
+#       SERVER_PASSWORD: "Dein_Sewrver_Password"
+       MULTITHREADING: True
+       RCON_ENABLED: False
+       RCON_PORT: 25575
+       TZ: "Europe/Berlin"
+       ADMIN_PASSWORD: "DeinAdminPassword"
+       AUTO_UPDATE_ENABLED: False
+       AUTO_UPDATE_WARN_MINUTES: 60
+       SERVER_NAME: "DeinServerName"
+       SERVER_DESCRIPTION: "DeineServerBeschreibung"
+       CROSSPLAY_PLATFORMS: "(Steam,Xbox)"
+       DEATH_PENALTY: "Item"
+       ENABLE_NON_LOGIN_PENALTY: False
+       PAL_EGG_DEFAULT_HATCHING_TIME: "36.000000"
+       ENABLE_INVADER_ENEMY: False
+    volumes:
+      - Palworld-Server:/palworld/
+
+networks:
+  Internet:
+    name: Internet
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: ${INTERNET_SUBNET}
+          gateway: ${INTERNET_GATEWAY}
+    internal: false
+
+volumes:
+  Palworld-Server:
+    name: Palworld-Server
