@@ -14,8 +14,8 @@ services:
 #      - 27015:27015/udp
 #      - 8212:8212/tcp
     environment:
-       PUID: 1002
-       PGID: 1002
+       PUID: DeinBenutzer
+       PGID: DeinBenutzer
        PORT: 8211
        PLAYERS: 4
 #       SERVER_PASSWORD: "Dein_Sewrver_Password"
